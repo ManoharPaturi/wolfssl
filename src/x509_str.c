@@ -418,8 +418,10 @@ static int X509StoreVerifyCertDate(WOLFSSL_X509_STORE_CTX* ctx, int ret)
                 WOLFSSL_MSG("Overriding date validation WOLFSSL_NO_CHECK_TIME");
                 ret = WOLFSSL_SUCCESS;
             }
-            else if ((param->flags & WOLFSSL_USE_CHECK_TIME) != 0 &&
-                (param->check_time != 0)) {
+            else if ((param->flags & WOLFSSL_USE_CHECK_TIME) != 0) {
+                /* check_time == 0 (the epoch) is a valid time_t; treating it
+                 * as "unset" validates against the system clock instead of
+                 * the caller's chosen time. */
                 time_t checkTime = param->check_time;
                 ret = WOLFSSL_SUCCESS; /* override date error and use custom set
                                         time for validating certificate dates */
