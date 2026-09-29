@@ -2208,16 +2208,18 @@ int wolfSSL_OCSP_check_nonce(OcspRequest* req, WOLFSSL_OCSP_BASICRESP* bs)
         rspNonceSz = bs->nonceSz;
     }
 
-    /* nonce absent in both req and rsp */
-    if (reqNonce == NULL && rspNonce == NULL)
+    /* The nonce fields are inline arrays, never NULL; branch on the
+     * sizes, or every nonce-less exchange falls through to the mismatch
+     * return below instead of the documented outcomes. */
+    if (reqNonceSz == 0 && rspNonceSz == 0)
         return 2;
 
     /* nonce present in rsp only */
-    if (reqNonce == NULL && rspNonce != NULL)
+    if (reqNonceSz == 0 && rspNonceSz != 0)
         return 3;
 
     /* nonce present in req only */
-    if (reqNonce != NULL && rspNonce == NULL)
+    if (reqNonceSz != 0 && rspNonceSz == 0)
         return WOLFSSL_FATAL_ERROR;
 
     /* nonces are present and equal, return 1. Extra NULL check for fixing
