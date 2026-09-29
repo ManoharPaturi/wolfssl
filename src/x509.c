@@ -6385,7 +6385,13 @@ int wolfSSL_X509_NAME_get_text_by_NID(WOLFSSL_X509_NAME* name,
     }
 
     /* + 1 to account for null char */
-    textSz = (int)min((word32)textSz + 1, (word32)len);
+    if ((word32)textSz + 1 > (word32)len) {
+        /* OpenSSL returns -1 when the buffer is too small; reporting the
+         * truncated length as success hides the loss from callers that
+         * size-check (e.g. CN-based logging or pinning). */
+        WOLFSSL_LEAVE("wolfSSL_X509_NAME_get_text_by_NID", textSz);
+        return WOLFSSL_FATAL_ERROR;
+    }
     if (textSz > 0) {
         XMEMCPY(buf, text, textSz - 1);
         buf[textSz - 1] = '\0';
