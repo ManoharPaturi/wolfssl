@@ -715,11 +715,23 @@ int wolfSSL_OCSP_resp_find_status(WOLFSSL_OCSP_BASICRESP *bs,
     while (single != NULL) {
         if (single->status != NULL && id->status != NULL &&
             (single->status->serialSz == id->status->serialSz)
-         && (XMEMCMP(single->status->serial, id->status->serial,
-                     (size_t)single->status->serialSz) == 0)
-         && (XMEMCMP(single->issuerHash, id->issuerHash, OCSP_DIGEST_SIZE) == 0)
-         && (XMEMCMP(single->issuerKeyHash, id->issuerKeyHash, OCSP_DIGEST_SIZE) == 0)) {
-            break;
+         && (single->status->serial[0] == id->status->serial[0])
+         && (single->hashAlgoOID == id->hashAlgoOID)) {
+            /* RFC 6960 section 4.2.1: the CertID hash algorithm governs the
+             * digest; comparing a fixed SHA-1-sized window weakens the
+             * issuerNameHash/issuerKeyHash match for larger digests and lets
+             * mismatched algorithms compare as equal. */
+            int digestSz = wc_HashGetDigestSize(
+                wc_OidGetHash(single->hashAlgoOID));
+            if (digestSz > 0
+             && (XMEMCMP(single->status->serial, id->status->serial,
+                         (size_t)single->status->serialSz) == 0)
+             && (XMEMCMP(single->issuerHash, id->issuerHash,
+                         (size_t)digestSz) == 0)
+             && (XMEMCMP(single->issuerKeyHash, id->issuerKeyHash,
+                         (size_t)digestSz) == 0)) {
+                break;
+            }
         }
         single = single->next;
     }
