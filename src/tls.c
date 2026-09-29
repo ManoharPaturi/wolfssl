@@ -3971,6 +3971,8 @@ int TLSX_CSR_InitRequest_ex(TLSX* extensions, DecodedCert* cert,
                 int  nonceSz = csr->request.ocsp[0].nonceSz;
                 OcspRequest* request;
 
+                if (req_cnt >= MAX_CERT_EXTENSIONS)
+                    return MAX_CERT_EXTENSIONS_ERR;
                 request = &csr->request.ocsp[req_cnt];
                 if (request->serial != NULL) {
                     /* clear request contents before reuse */
